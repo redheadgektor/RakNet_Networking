@@ -1,0 +1,6 @@
+public enum SamplePacketID
+{
+    CLIENT_DATA_REQUEST = InternalPacketID.ID_USER_PACKET_ENUM,
+    CLIENT_DATA_REPLY,
+    CLIENT_DATA_ACCEPTED
+}
