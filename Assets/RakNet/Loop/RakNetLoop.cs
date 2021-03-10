@@ -80,8 +80,8 @@ internal static class RakNetLoop
         PlayerLoop.SetPlayerLoop(playerLoop);
 
 #if !UNITY_EDITOR
-        Application.quitting += RakServer.Deinit;
-        Application.quitting += RakClient.Deinit;
+        Application.quitting += RakServer.Uninit;
+        Application.quitting += RakClient.Uninit;
 #endif
 
     }
