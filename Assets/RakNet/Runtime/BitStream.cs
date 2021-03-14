@@ -176,14 +176,27 @@ public class BitStream : IDisposable
         Imports.BitStream_Reset(Pointer);
     }
 
-    private byte[] GetData_Buffer = new byte[1];
+    private byte[] GetData_Buffer = new byte[0];
     public byte[] GetData()
     {
-        int data_size = 0;
-        IntPtr data_ptr = Imports.BitStream_GetData(Pointer, ref data_size);
-        Array.Resize(ref GetData_Buffer, data_size);
-        Marshal.Copy(data_ptr, GetData_Buffer, 0, data_size);
-        return GetData_Buffer;
+        Imports.BitStream_GetData(Pointer, out IntPtr data, out int data_size);
+
+        if (data_size > GetData_Buffer.Length)
+        {
+            Array.Resize(ref GetData_Buffer, data_size);
+        }
+
+        unsafe
+        {
+            byte* ptr = (byte*)data.ToPointer();
+
+            for (int i = 0; i < data_size; i++)
+            {
+                GetData_Buffer[i] = ptr[i];
+            }
+        }
+
+        return new ArraySegment<byte>(GetData_Buffer, 0, data_size).Array;
     }
 
     public void SetData(byte[] data)

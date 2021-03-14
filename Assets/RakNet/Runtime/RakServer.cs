@@ -36,9 +36,7 @@ public class RakServer
 
     static IntPtr packet_ptr = IntPtr.Zero;
 
-    static ulong receiver_guid = 0;
     static byte packet_id = 0;
-    static uint packet_size = 0;
 
     static List<IRakServer> interfaces = new List<IRakServer>();
 
@@ -60,7 +58,7 @@ public class RakServer
             {
                 while (Imports.Shared_HasPackets(Pointer))
                 {
-                    packet_ptr = Imports.Server_GetPacket(Pointer, ref receiver_guid, ref packet_size);
+                    packet_ptr = Imports.Server_GetPacket(Pointer, out ulong receiver_guid, out uint packet_size);
 
                     using (PooledBitStream bitStream = PooledBitStream.GetBitStream())
                     {
@@ -113,11 +111,6 @@ public class RakServer
                 Debug.LogError("[RakServer] " + entry_ex);
             }
         }
-    }
-
-    internal static void PreLateUpdate()
-    {
-
     }
 
     internal static void Init()
@@ -362,7 +355,7 @@ public class RakServer
     /// <summary>
     /// Server queries is allowed?
     /// </summary>
-    public static bool IsQueryAllow(bool enabled)
+    public static bool IsQueryAllowed()
     {
         try
         {

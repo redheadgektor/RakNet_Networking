@@ -108,7 +108,7 @@ internal static class RakNetLoop
 
     static void PreLateUpdate()
     {
-        RakServer.PreLateUpdate();
-        RakClient.PreLateUpdate();
+        //RakServer.PreLateUpdate();
+        //RakClient.PreLateUpdate();
     }
 }

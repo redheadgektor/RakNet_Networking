@@ -27,17 +27,17 @@ public static class Imports
     public static extern void Client_Disconnect(IntPtr p);
 
     [DllImport(DLL_Name)]
-    public static extern IntPtr Client_GetPacket(IntPtr p, ref uint packet_size);
+    public static extern IntPtr Client_GetPacket(IntPtr p, out uint packet_size);
 
     [DllImport(DLL_Name)]
     public static extern byte Client_Send(IntPtr p, IntPtr b, PacketPriority priority, PacketReliability reliability, byte channel);
 
     [DllImport(DLL_Name)]
     public static extern int Client_GetPing(IntPtr p);
-    
+
     [DllImport(DLL_Name)]
     public static extern int Client_GetAveragePing(IntPtr p);
-    
+
     [DllImport(DLL_Name)]
     public static extern int Client_GetLowestPing(IntPtr p);
 
@@ -56,12 +56,12 @@ public static class Imports
 
     [DllImport(DLL_Name)]
     public static extern void Server_Stop(IntPtr p);
-	
-	[DllImport(DLL_Name)]
-	public static extern IntPtr Server_IP(IntPtr p);
 
     [DllImport(DLL_Name)]
-    public static extern IntPtr Server_GetPacket(IntPtr p, ref ulong guid, ref uint packet_size);
+    public static extern IntPtr Server_IP(IntPtr p);
+
+    [DllImport(DLL_Name)]
+    public static extern IntPtr Server_GetPacket(IntPtr p, out ulong guid, out uint packet_size);
 
     [DllImport(DLL_Name)]
     public static extern void Server_SetMaxConnections(IntPtr p, ushort max_connections);
@@ -105,21 +105,21 @@ public static class Imports
     [DllImport(DLL_Name)]
     public static extern uint Server_SendToAllIgnore(IntPtr p, IntPtr b, ulong guid, PacketPriority priority, PacketReliability reliability, byte channel);
 
-	[DllImport(DLL_Name)]
-	public static extern ulong Server_GetGuidFromIndex(IntPtr p, int index);
+    [DllImport(DLL_Name)]
+    public static extern ulong Server_GetGuidFromIndex(IntPtr p, int index);
 
     [DllImport(DLL_Name)]
     public static extern int Server_GetIndexFromGuid(IntPtr p, ulong guid);
 
     [DllImport(DLL_Name)]
     public static extern int Server_GetPing(IntPtr p, ulong guid);
-    
+
     [DllImport(DLL_Name)]
     public static extern int Server_GetAveragePing(IntPtr p, ulong guid);
-    
+
     [DllImport(DLL_Name)]
     public static extern int Server_GetLowestPing(IntPtr p, ulong guid);
-	
+
     [DllImport(DLL_Name)]
     public static extern void Server_AllowQuery(IntPtr p, bool enabled);
 
@@ -138,13 +138,13 @@ public static class Imports
 
     [DllImport(DLL_Name)]
     public static extern IntPtr Shared_GetAddress(IntPtr p, ulong guid, bool with_port);
-	
-	[DllImport(DLL_Name)]
-	public static extern ushort Shared_GetPort(IntPtr p, ulong guid);
-	
+
+    [DllImport(DLL_Name)]
+    public static extern ushort Shared_GetPort(IntPtr p, ulong guid);
+
     [DllImport(DLL_Name)]
     public static extern ulong Shared_GetStatisticsLastSeconds(IntPtr p, uint index, RNSPerSecondMetrics metrics);
-    
+
     [DllImport(DLL_Name)]
     public static extern ulong Shared_GetStatisticsTotal(IntPtr p, uint index, RNSPerSecondMetrics metrics);
 
@@ -190,7 +190,7 @@ public static class Imports
     public static extern void BitStream_Reset(IntPtr bitstream_pointer);
 
     [DllImport(DLL_Name)]
-    public static extern IntPtr BitStream_GetData(IntPtr bitstream_pointer, ref int data_size);
+    public static extern void BitStream_GetData(IntPtr bitstream_pointer, out IntPtr data, out int data_size);
 
     [DllImport(DLL_Name)]
     public static extern void BitStream_SetData(IntPtr bitstream_pointer, byte[] data, int data_size);

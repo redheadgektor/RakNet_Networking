@@ -60,8 +60,7 @@ public class RakClient
             {
                 while (Imports.Shared_HasPackets(Pointer))
                 {
-                    uint packet_size = 0;
-                    IntPtr packet_ptr = Imports.Client_GetPacket(Pointer, ref packet_size);
+                    IntPtr packet_ptr = Imports.Client_GetPacket(Pointer, out uint packet_size);
 
                     using (PooledBitStream bitStream = PooledBitStream.GetBitStream())
                     {
@@ -153,11 +152,6 @@ public class RakClient
         }
     }
 
-    internal static void PreLateUpdate()
-    {
-
-    }
-
     internal static void Init()
     {
         if (!Initialized)
@@ -195,7 +189,7 @@ public class RakClient
         {
             try
             {
-                Imports.Server_Uninit(Pointer);
+                Imports.Client_Uninit(Pointer);
             }
             catch (DllNotFoundException dll_ex)
             {
