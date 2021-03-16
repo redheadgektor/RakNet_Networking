@@ -22,11 +22,15 @@ See SampleClient.cs and SampleServer.cs
 
 # Query
 ## Quering data from server
->To request information about the server, just send a UDP packet with the header 'RakNetQuery' to server
+>To request information about the server, you need to send a packet to the server with an 8-byte header, taking any representation of the header from the table below
+
+| string | ulong | hex |
+|----:|:----:|:----------|
+| `RakQuery` | `8751168580485865810` | `0x79726575516B6152` |
 
 >See [Query Sample](https://github.com/ep1s0de3/RakNet_Networking/blob/main/Assets/RakNet/Samples/RakQuerySample.cs)
 
->If the server-side response data is not specified, the server responded with the text message "RakNetQuery"
+>If the server-side response data is not specified, the server responded with the text message "RakQuery"
 
 >If the server does not respond to requests, then the server is turned off, or the port on which it is running is closed, or the acceptance of requests is disabled by the user
 
