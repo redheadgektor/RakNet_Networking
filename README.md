@@ -26,7 +26,7 @@ See SampleClient.cs and SampleServer.cs
 
 >See [Query Sample](https://github.com/ep1s0de3/RakNet_Networking/blob/main/Assets/RakNet/Samples/RakQuerySample.cs)
 
->If the server-side response data is not specified, the server responded with the text message "RakNet Query Response is empty"
+>If the server-side response data is not specified, the server responded with the text message "RakNetQuery"
 
 >If the server does not respond to requests, then the server is turned off, or the port on which it is running is closed, or the acceptance of requests is disabled by the user
 
