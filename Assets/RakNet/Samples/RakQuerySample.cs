@@ -13,7 +13,7 @@ public static class RakQuerySample
         udp.Client.SendTimeout = 5000;
 
         //Set Query Header
-        byte[] header = Encoding.UTF8.GetBytes("RakNetQuery");
+        byte[] header = Encoding.UTF8.GetBytes("RakQuery");
 
         //Send Header to server
         udp.Send(header, header.Length, address, port);
