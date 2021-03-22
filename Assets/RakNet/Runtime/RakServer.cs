@@ -73,30 +73,42 @@ public class RakServer
                                 case InternalPacketID.ID_NEW_INCOMING_CONNECTION:
                                     for (int i = 0; i < interfaces.Count; i++)
                                     {
-                                        interfaces[i].OnConnected(receiver_guid);
+                                        if (interfaces[i] != null)
+                                        {
+                                            interfaces[i].OnConnected(receiver_guid);
+                                        }
                                     }
                                     break;
 
                                 case InternalPacketID.ID_DISCONNECTION_NOTIFICATION:
                                     for (int i = 0; i < interfaces.Count; i++)
                                     {
-                                        interfaces[i].OnDisconnected(receiver_guid, DisconnectReason.ConnectionClosed);
+                                        if (interfaces[i] != null)
+                                        {
+                                            interfaces[i].OnDisconnected(receiver_guid, DisconnectReason.ConnectionClosed);
+                                        }
                                     }
                                     break;
 
                                 case InternalPacketID.ID_CONNECTION_LOST:
                                     for (int i = 0; i < interfaces.Count; i++)
                                     {
-                                        interfaces[i].OnDisconnected(receiver_guid, DisconnectReason.ConnectionLost);
+                                        if (interfaces[i] != null)
+                                        {
+                                            interfaces[i].OnDisconnected(receiver_guid, DisconnectReason.ConnectionLost);
+                                        }
                                     }
                                     break;
                             }
                         }
-                        else if((InternalPacketID)packet_id >= InternalPacketID.ID_USER_PACKET_ENUM)
+                        else if ((InternalPacketID)packet_id >= InternalPacketID.ID_USER_PACKET_ENUM)
                         {
                             for (int i = 0; i < interfaces.Count; i++)
                             {
-                                interfaces[i].OnReceived(packet_id, receiver_guid, bitStream);
+                                if (interfaces[i] != null)
+                                {
+                                    interfaces[i].OnReceived(packet_id, receiver_guid, bitStream);
+                                }
                             }
                         }
                     }
@@ -135,7 +147,7 @@ public class RakServer
 
                 if (Initialized)
                 {
-                    Debug.Log("[RakServer] Initialized"/* 0x" + Pointer.ToString("X")*/);
+                    Debug.Log("[RakServer] Initialized 0x" + Pointer.ToString("X"));
 
                     if (OnInitialized != null)
                         OnInitialized();
@@ -184,10 +196,12 @@ public class RakServer
         catch (DllNotFoundException dll_ex)
         {
             Debug.LogError("[RakServer] " + dll_ex);
+            result = ServerStartResult.ServerPointerIsNull;
         }
         catch (EntryPointNotFoundException entry_ex)
         {
             Debug.LogError("[RakServer] " + entry_ex);
+            result = ServerStartResult.ServerPointerIsNull;
         }
         finally
         {
@@ -195,6 +209,11 @@ public class RakServer
             {
                 State = ServerState.STARTED;
             }
+        }
+
+        if (OnServerStartResult != null)
+        {
+            OnServerStartResult(result);
         }
 
         return result;
