@@ -50,9 +50,12 @@ public class RakClient
         {
             if (State == ClientState.IS_CONNECTING)
             {
-                for(int i = 0; i < interfaces.Count; i++)
+                for (int i = 0; i < interfaces.Count; i++)
                 {
-                    interfaces[i].OnConnecting(server_address, server_port, server_password);
+                    if (interfaces[i] != null)
+                    {
+                        interfaces[i].OnConnecting(server_address, server_port, server_password);
+                    }
                 }
             }
 
@@ -79,7 +82,10 @@ public class RakClient
                                     for (int i = 0; i < interfaces.Count; i++)
                                     {
                                         State = ClientState.IS_CONNECTED;
-                                        interfaces[i].OnConnected(server_address, server_port, server_password);
+                                        if (interfaces[i] != null)
+                                        {
+                                            interfaces[i].OnConnected(server_address, server_port, server_password);
+                                        }
                                     }
                                     break;
 
@@ -132,7 +138,10 @@ public class RakClient
                         {
                             for (int i = 0; i < interfaces.Count; i++)
                             {
-                                interfaces[i].OnReceived(packet_id, packet_size, bitStream);
+                                if (interfaces[i] != null)
+                                {
+                                    interfaces[i].OnReceived(packet_id, packet_size, bitStream);
+                                }
                             }
                         }
                     }
@@ -174,9 +183,9 @@ public class RakClient
 
                 if (Initialized)
                 {
-                    Debug.Log("[RakClient] Initialized" /* 0x" + Pointer.ToString("X")*/);
+                    Debug.Log("[RakClient] Initialized 0x" + Pointer.ToString("X"));
 
-                    if(OnInitialized != null)
+                    if (OnInitialized != null)
                         OnInitialized();
                 }
             }
@@ -189,6 +198,7 @@ public class RakClient
         {
             try
             {
+                Disconnect();
                 Imports.Client_Uninit(Pointer);
             }
             catch (DllNotFoundException dll_ex)
@@ -248,7 +258,10 @@ public class RakClient
             State = ClientState.IS_DISCONNECTED;
             for (int i = 0; i < interfaces.Count; i++)
             {
-                interfaces[i].OnDisconnected(reason);
+                if (interfaces[i] != null)
+                {
+                    interfaces[i].OnDisconnected(reason);
+                }
             }
         }
     }
