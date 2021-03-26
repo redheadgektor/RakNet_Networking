@@ -62,15 +62,16 @@ internal static class RakNetLoop
     static void RuntimeInitializeOnLoad()
     {
 #if UNITY_EDITOR
+        UnityEditor.Compilation.CompilationPipeline.compilationFinished += delegate (object o)
+        {
+            UninitAllInstances();
+        };
         //if app non playing dont init RakNet and loop
         if (!UnityEditor.EditorApplication.isPlaying)
         {
             return;
         }
-
-        UnityEditor.EditorApplication.LockReloadAssemblies();
 #endif
-
         RakServer.Init();
         RakClient.Init();
 
@@ -79,29 +80,36 @@ internal static class RakNetLoop
         AddToPlayerLoop(PreLateUpdate, typeof(RakNetLoop), ref playerLoop, typeof(PreLateUpdate), AddMode.End);
         PlayerLoop.SetPlayerLoop(playerLoop);
 
-#if !UNITY_EDITOR
-        Application.quitting += RakServer.Uninit;
-        Application.quitting += RakClient.Uninit;
-#endif
+        Application.quitting += UninitAllInstances;
 
+    }
+
+#if UNITY_EDITOR
+    [UnityEditor.MenuItem("RakNet/Uninitialize all")]
+#endif
+    static void UninitAllInstances()
+    {
+        uint before = RakServer.NativeInstances();
+        RakServer.UninitInstances();
+        uint after = RakServer.NativeInstances();
+
+        Debug.Log("Unitialized " + (before - after) + " server instances");
+
+        before = RakClient.NativeInstances();
+        RakClient.UninitInstances();
+        after = RakClient.NativeInstances();
+
+        Debug.Log("Unitialized " + (before - after) + " client instances");
     }
 
     static void EarlyUpdate()
     {
-        //De-initialize if non playing
 #if UNITY_EDITOR
         if (!UnityEditor.EditorApplication.isPlaying)
         {
-            RakServer.Uninit();
-            RakClient.Uninit();
-
-            //Compiling scripts after uninitalizing
-            UnityEditor.EditorApplication.UnlockReloadAssemblies();
-
             return;
         }
 #endif
-
         RakServer.EarlyUpdate();
         RakClient.EarlyUpdate();
     }

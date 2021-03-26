@@ -44,6 +44,12 @@ public static class Imports
     [DllImport(DLL_Name)]
     public static extern ulong Client_Guid(IntPtr p);
 
+    [DllImport(DLL_Name)]
+    public static extern uint GetClientInstances();
+
+    [DllImport(DLL_Name)]
+    public static extern void UninitClientInstances();
+
     /* SERVER */
     [DllImport(DLL_Name)]
     public static extern IntPtr Server_Init();
@@ -128,6 +134,12 @@ public static class Imports
 
     [DllImport(DLL_Name)]
     public static extern void Server_SetQueryResponce(IntPtr p, byte[] data);
+
+    [DllImport(DLL_Name)]
+    public static extern uint GetServerInstances();
+
+    [DllImport(DLL_Name)]
+    public static extern void UninitServerInstances();
 
     /* SHARED */
     [DllImport(DLL_Name)]

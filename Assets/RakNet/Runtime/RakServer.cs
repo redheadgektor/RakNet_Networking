@@ -183,6 +183,41 @@ public class RakServer
         }
     }
 
+    internal static uint NativeInstances()
+    {
+        try
+        {
+            return Imports.GetServerInstances();
+        }
+        catch (DllNotFoundException dll_ex)
+        {
+            Debug.LogError("[RakServer] " + dll_ex);
+        }
+        catch (EntryPointNotFoundException entry_ex)
+        {
+            Debug.LogError("[RakServer] " + entry_ex);
+        }
+
+        return 0;
+    }
+
+    internal static void UninitInstances()
+    {
+        try
+        {
+            Uninit();
+            Imports.UninitServerInstances();
+        }
+        catch (DllNotFoundException dll_ex)
+        {
+            Debug.LogError("[RakServer] " + dll_ex);
+        }
+        catch (EntryPointNotFoundException entry_ex)
+        {
+            Debug.LogError("[RakServer] " + entry_ex);
+        }
+    }
+
     /// <summary>
     /// Start server
     /// </summary>

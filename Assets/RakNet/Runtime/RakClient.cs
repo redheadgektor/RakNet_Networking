@@ -219,6 +219,42 @@ public class RakClient
         }
     }
 
+    internal static uint NativeInstances()
+    {
+        try
+        {
+            return Imports.GetClientInstances();
+        }
+        catch (DllNotFoundException dll_ex)
+        {
+            Debug.LogError("[RakClient] " + dll_ex);
+        }
+        catch (EntryPointNotFoundException entry_ex)
+        {
+            Debug.LogError("[RakClient] " + entry_ex);
+        }
+
+        return 0;
+    }
+
+    internal static void UninitInstances()
+    {
+        try
+        {
+            Uninit();
+            Imports.UninitClientInstances();
+        }
+        catch (DllNotFoundException dll_ex)
+        {
+            Debug.LogError("[RakClient] " + dll_ex);
+        }
+        catch (EntryPointNotFoundException entry_ex)
+        {
+            Debug.LogError("[RakClient] " + entry_ex);
+        }
+    }
+
+
     /* PUBLIC */
 
     /// <summary>
