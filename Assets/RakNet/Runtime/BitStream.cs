@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
 using UnityEngine;
@@ -23,6 +22,17 @@ public sealed class PooledBitStream : BitStream, IDisposable
     {
         PooledBitStream bitStream = Take();
         bitStream.Reset();
+        bitStream.ResetReadPointer();
+        bitStream.ResetWritePointer();
+        return bitStream;
+    }
+    public static PooledBitStream GetBitStream(byte[] data)
+    {
+        PooledBitStream bitStream = Take();
+        bitStream.Reset();
+        bitStream.ResetReadPointer();
+        bitStream.ResetWritePointer();
+        bitStream.SetData(data);
         return bitStream;
     }
     public static void Recycle(PooledBitStream writer)
@@ -215,26 +225,12 @@ public class BitStream : IDisposable
         Imports.BitStream_WriteByte(Pointer, value);
     }
 
-    public void WriteDelta(byte value, byte last_value)
-    {
-        if (Pointer == IntPtr.Zero)
-            return;
-
-        Imports.BitStream_WriteByteDelta(Pointer, value, last_value);
-    }
     public void WriteCompressed(byte value)
     {
         if (Pointer == IntPtr.Zero)
             return;
 
         Imports.BitStream_WriteByteCompressed(Pointer, value);
-    }
-    public void WriteCompressedDelta(byte value, byte last_value)
-    {
-        if (Pointer == IntPtr.Zero)
-            return;
-
-        Imports.BitStream_WriteByteCompressedDelta(Pointer, value, last_value);
     }
 
     public void Write(sbyte value)
@@ -244,13 +240,7 @@ public class BitStream : IDisposable
 
         Write((byte)value);
     }
-    public void WriteDelta(sbyte value, sbyte last_value)
-    {
-        if (Pointer == IntPtr.Zero)
-            return;
 
-        WriteDelta((byte)value, (byte)last_value);
-    }
     public void WriteCompressed(sbyte value)
     {
         if (Pointer == IntPtr.Zero)
@@ -258,13 +248,7 @@ public class BitStream : IDisposable
 
         WriteCompressed((byte)value);
     }
-    public void WriteCompressedDelta(sbyte value, sbyte last_value)
-    {
-        if (Pointer == IntPtr.Zero)
-            return;
 
-        WriteCompressedDelta((byte)value, (byte)last_value);
-    }
     public void Write(bool value)
     {
         Write(value ? (byte)1 : (byte)0);
@@ -277,26 +261,13 @@ public class BitStream : IDisposable
 
         Imports.BitStream_WriteShort(Pointer, value);
     }
-    public void WriteDelta(short value, short last_value)
-    {
-        if (Pointer == IntPtr.Zero)
-            return;
 
-        Imports.BitStream_WriteShortDelta(Pointer, value, last_value);
-    }
     public void WriteCompressed(short value)
     {
         if (Pointer == IntPtr.Zero)
             return;
 
         Imports.BitStream_WriteShortCompressed(Pointer, value);
-    }
-    public void WriteCompressedDelta(short value, short last_value)
-    {
-        if (Pointer == IntPtr.Zero)
-            return;
-
-        Imports.BitStream_WriteShortCompressedDelta(Pointer, value, last_value);
     }
 
     public void Write(ushort value)
@@ -306,26 +277,13 @@ public class BitStream : IDisposable
 
         Write((short)value);
     }
-    public void WriteDelta(ushort value, ushort last_value)
-    {
-        if (Pointer == IntPtr.Zero)
-            return;
 
-        WriteDelta((short)value, (short)last_value);
-    }
     public void WriteCompressed(ushort value)
     {
         if (Pointer == IntPtr.Zero)
             return;
 
         WriteCompressed((short)value);
-    }
-    public void WriteCompressedDelta(ushort value, ushort last_value)
-    {
-        if (Pointer == IntPtr.Zero)
-            return;
-
-        WriteCompressedDelta((short)value, (short)last_value);
     }
 
     public void Write(int value)
@@ -335,26 +293,13 @@ public class BitStream : IDisposable
 
         Imports.BitStream_WriteInt(Pointer, value);
     }
-    public void WriteDelta(int value, int last_value)
-    {
-        if (Pointer == IntPtr.Zero)
-            return;
 
-        Imports.BitStream_WriteIntDelta(Pointer, value, last_value);
-    }
     public void WriteCompressed(int value)
     {
         if (Pointer == IntPtr.Zero)
             return;
 
         Imports.BitStream_WriteIntCompressed(Pointer, value);
-    }
-    public void WriteCompressedDelta(int value, int last_value)
-    {
-        if (Pointer == IntPtr.Zero)
-            return;
-
-        Imports.BitStream_WriteIntCompressedDelta(Pointer, value, last_value);
     }
 
     public void Write(uint value)
@@ -364,26 +309,13 @@ public class BitStream : IDisposable
 
         Write((int)value);
     }
-    public void WriteDelta(uint value, uint last_value)
-    {
-        if (Pointer == IntPtr.Zero)
-            return;
 
-        WriteDelta((int)value, (int)last_value);
-    }
     public void WriteCompressed(uint value)
     {
         if (Pointer == IntPtr.Zero)
             return;
 
         WriteCompressed((int)value);
-    }
-    public void WriteCompressedDelta(uint value, uint last_value)
-    {
-        if (Pointer == IntPtr.Zero)
-            return;
-
-        WriteCompressedDelta((int)value, (int)last_value);
     }
 
     public void Write(float value)
@@ -393,26 +325,13 @@ public class BitStream : IDisposable
 
         Imports.BitStream_WriteFloat(Pointer, value);
     }
-    public void WriteDelta(float value, float last_value, float diff = 0.001f)
-    {
-        if (Pointer == IntPtr.Zero)
-            return;
 
-        Imports.BitStream_WriteFloatDelta(Pointer, value, last_value, diff);
-    }
     public void WriteCompressed(float value)
     {
         if (Pointer == IntPtr.Zero)
             return;
 
         Imports.BitStream_WriteFloatCompressed(Pointer, value);
-    }
-    public void WriteCompressedDelta(float value, float last_value)
-    {
-        if (Pointer == IntPtr.Zero)
-            return;
-
-        Imports.BitStream_WriteFloatCompressedDelta(Pointer, value, last_value);
     }
 
     public void Write(float value, float min, float max)
@@ -430,26 +349,13 @@ public class BitStream : IDisposable
 
         Imports.BitStream_WriteLong(Pointer, value);
     }
-    public void WriteDelta(long value, long last_value)
-    {
-        if (Pointer == IntPtr.Zero)
-            return;
 
-        Imports.BitStream_WriteLongDelta(Pointer, value, last_value);
-    }
     public void WriteCompressed(long value)
     {
         if (Pointer == IntPtr.Zero)
             return;
 
         Imports.BitStream_WriteLongCompressed(Pointer, value);
-    }
-    public void WriteCompressedDelta(long value, long last_value)
-    {
-        if (Pointer == IntPtr.Zero)
-            return;
-
-        Imports.BitStream_WriteLongCompressedDelta(Pointer, value, last_value);
     }
 
     public void Write(ulong value)
@@ -459,13 +365,7 @@ public class BitStream : IDisposable
 
         Write((long)value);
     }
-    public void WriteDelta(ulong value, ulong last_value)
-    {
-        if (Pointer == IntPtr.Zero)
-            return;
 
-        WriteDelta((long)value, (long)last_value);
-    }
     public void WriteCompressed(ulong value)
     {
         if (Pointer == IntPtr.Zero)
@@ -473,31 +373,17 @@ public class BitStream : IDisposable
 
         WriteCompressed((long)value);
     }
-    public void WriteCompressedDelta(ulong value, ulong last_value)
-    {
-        if (Pointer == IntPtr.Zero)
-            return;
-
-        WriteCompressedDelta((long)value, (long)last_value);
-    }
 
     public void Write(string value)
     {
         if (Pointer == IntPtr.Zero)
             return;
 
-        if (string.IsNullOrEmpty(value) || value.Length <= 0)
+        try
         {
-            Write((ushort)0);
-            return;
+            Imports.BitStream_WriteString(Pointer, value);
         }
-
-        byte[] bytes = Encoding.UTF8.GetBytes(value);
-        Write((ushort)bytes.Length);
-        for (int i = 0; i < bytes.Length; i++)
-        {
-            Write(bytes[i]);
-        }
+        catch { }
     }
 
     public void Write(Vector2 value)
@@ -572,13 +458,7 @@ public class BitStream : IDisposable
 
         return Imports.BitStream_ReadByte(Pointer);
     }
-    public byte ReadByteDelta(byte last_value)
-    {
-        if (Pointer == IntPtr.Zero)
-            return 0;
 
-        return Imports.BitStream_ReadByteDelta(Pointer, last_value);
-    }
     public byte ReadByteCompressed()
     {
         if (Pointer == IntPtr.Zero)
@@ -586,30 +466,17 @@ public class BitStream : IDisposable
 
         return Imports.BitStream_ReadByteCompressed(Pointer);
     }
-    public byte ReadByteCompressedDelta(byte last_value)
-    {
-        if (Pointer == IntPtr.Zero)
-            return 0;
-
-        return Imports.BitStream_ReadByteCompressedDelta(Pointer, last_value);
-    }
 
     public sbyte ReadSByte()
     {
         return (sbyte)ReadByte();
     }
-    public sbyte ReadSByteDelta(sbyte last_value)
-    {
-        return (sbyte)ReadByteDelta((byte)last_value);
-    }
+
     public sbyte ReadSByteCompressed()
     {
         return (sbyte)ReadByteCompressed();
     }
-    public sbyte ReadSByteCompressedDelta(sbyte last_value)
-    {
-        return (sbyte)ReadByteCompressedDelta((byte)last_value);
-    }
+
     public bool ReadBool()
     {
         return ReadByte() >= 1 ? true : false;
@@ -622,13 +489,7 @@ public class BitStream : IDisposable
 
         return Imports.BitStream_ReadShort(Pointer);
     }
-    public short ReadShortDelta(short last_value)
-    {
-        if (Pointer == IntPtr.Zero)
-            return 0;
 
-        return Imports.BitStream_ReadShortDelta(Pointer, last_value);
-    }
     public short ReadShortCompressed()
     {
         if (Pointer == IntPtr.Zero)
@@ -636,29 +497,15 @@ public class BitStream : IDisposable
 
         return Imports.BitStream_ReadShortCompressed(Pointer);
     }
-    public short ReadShortCompressedDelta(short last_value)
-    {
-        if (Pointer == IntPtr.Zero)
-            return 0;
-
-        return Imports.BitStream_ReadShortCompressedDelta(Pointer, last_value);
-    }
 
     public ushort ReadUShort()
     {
         return (ushort)ReadShort();
     }
-    public ushort ReadUShortDelta(ushort last_value)
-    {
-        return (ushort)ReadShortDelta((short)last_value);
-    }
+
     public ushort ReadUShortCompressed()
     {
         return (ushort)ReadShortCompressed();
-    }
-    public ushort ReadUShortCompressedDelta(ushort last_value)
-    {
-        return (ushort)ReadShortCompressedDelta((short)last_value);
     }
 
     public int ReadInt()
@@ -668,13 +515,7 @@ public class BitStream : IDisposable
 
         return Imports.BitStream_ReadInt(Pointer);
     }
-    public int ReadIntDelta(int last_value)
-    {
-        if (Pointer == IntPtr.Zero)
-            return 0;
 
-        return Imports.BitStream_ReadIntDelta(Pointer, last_value);
-    }
     public int ReadIntCompressed()
     {
         if (Pointer == IntPtr.Zero)
@@ -682,29 +523,15 @@ public class BitStream : IDisposable
 
         return Imports.BitStream_ReadIntCompressed(Pointer);
     }
-    public int ReadIntCompressedDelta(int last_value)
-    {
-        if (Pointer == IntPtr.Zero)
-            return 0;
-
-        return Imports.BitStream_ReadIntCompressedDelta(Pointer, last_value);
-    }
 
     public uint ReadUInt()
     {
         return (uint)ReadInt();
     }
-    public uint ReadUIntDelta(uint last_value)
-    {
-        return (uint)ReadIntDelta((int)last_value);
-    }
+
     public uint ReadUIntCompressed()
     {
         return (uint)ReadIntCompressed();
-    }
-    public uint ReadUIntCompressedDelta(uint last_value)
-    {
-        return (uint)ReadIntCompressedDelta((int)last_value);
     }
 
     public float ReadFloat()
@@ -714,26 +541,13 @@ public class BitStream : IDisposable
 
         return Imports.BitStream_ReadFloat(Pointer);
     }
-    public float ReadFloatDelta(float last_value)
-    {
-        if (Pointer == IntPtr.Zero)
-            return 0;
 
-        return Imports.BitStream_ReadFloatDelta(Pointer, last_value);
-    }
     public float ReadFloatCompressed()
     {
         if (Pointer == IntPtr.Zero)
             return 0;
 
         return Imports.BitStream_ReadFloatCompressed(Pointer);
-    }
-    public float ReadFloatCompressedDelta(float last_value)
-    {
-        if (Pointer == IntPtr.Zero)
-            return 0;
-
-        return Imports.BitStream_ReadFloatCompressedDelta(Pointer, last_value);
     }
 
     public float ReadFloat16(float min, float max)
@@ -751,13 +565,7 @@ public class BitStream : IDisposable
 
         return Imports.BitStream_ReadLong(Pointer);
     }
-    public long ReadLongDelta(long last_value)
-    {
-        if (Pointer == IntPtr.Zero)
-            return 0;
 
-        return Imports.BitStream_ReadLongDelta(Pointer, last_value);
-    }
     public long ReadLongCompressed()
     {
         if (Pointer == IntPtr.Zero)
@@ -765,53 +573,15 @@ public class BitStream : IDisposable
 
         return Imports.BitStream_ReadLongCompressed(Pointer);
     }
-    public long ReadLongCompressedDelta(long last_value)
-    {
-        if (Pointer == IntPtr.Zero)
-            return 0;
-
-        return Imports.BitStream_ReadLongCompressedDelta(Pointer, last_value);
-    }
 
     public ulong ReadULong()
     {
         return (ulong)ReadLong();
     }
-    public ulong ReadULongDelta(ulong last_value)
-    {
-        return (ulong)ReadLongDelta((long)last_value);
-    }
+
     public ulong ReadULongCompressed()
     {
         return (ulong)ReadLongCompressed();
-    }
-    public ulong ReadULongCompressedDelta(ulong last_value)
-    {
-        return (ulong)ReadLongCompressedDelta((long)last_value);
-    }
-
-    byte[] buffered_StringBytes = new byte[0];
-
-    public string ReadString()
-    {
-        if (Pointer == IntPtr.Zero)
-            return string.Empty;
-
-        ushort count = ReadUShort();
-
-        if (count <= 0)
-        {
-            return string.Empty;
-        }
-
-        buffered_StringBytes = new byte[count];
-
-        for (int i = 0; i < buffered_StringBytes.Length; i++)
-        {
-            buffered_StringBytes[i] = ReadByte();
-        }
-
-        return Encoding.UTF8.GetString(buffered_StringBytes);
     }
 
     public Vector2 ReadVector2()
@@ -841,18 +611,6 @@ public class BitStream : IDisposable
         }
     }
 
-    public Vector3 ReadVector3Delta(Vector3 last_value)
-    {
-        short changeMask = ReadShort();
-
-        Vector3 value = last_value;
-        if ((changeMask & 1 << 0) != 0) { value.x = ReadFloat(); }
-        if ((changeMask & 1 << 1) != 0) { value.y = ReadFloat(); }
-        if ((changeMask & 1 << 2) != 0) { value.z = ReadFloat(); }
-
-        return value;
-    }
-
     public Vector4 ReadVector4()
     {
         float x = ReadFloat();
@@ -874,66 +632,52 @@ public class BitStream : IDisposable
         }
     }
 
-    public Quaternion ReadQuaternionDelta(Quaternion last_value)
+    public string ReadString(bool unicode = false)
     {
-        return Quaternion.Euler(ReadVector3Delta(last_value.eulerAngles));
-    }
+        if (Pointer == IntPtr.Zero)
+            return string.Empty;
 
-    /* ARRAYS */
-    byte[] bArray = new byte[0];
-    float[] flArray = new float[0];
-
-    //BYTE[]
-    public void WriteArray(byte[] array)
-    {
-        Write((short)array.Length);
-        for (int i = 0; i < array.Length; i++)
+        try
         {
-            Write(array[i]);
+            IntPtr string_ptr = Imports.BitStream_ReadString(Pointer);
+
+            if (unicode)
+            {
+                return Imports.IntPtrToStringUnicode(string_ptr);
+            }
+            else
+            {
+                return Imports.IntPtrToStringAnsi(string_ptr);
+            }
         }
+        catch { }
+
+        return string.Empty;
     }
+
+    public void WriteBytes(byte[] array)
+    {
+        try
+        {
+            Imports.BitStream_WriteArray(Pointer, array);
+        }
+        catch { }
+    }
+
+    static readonly byte[] NullArray = new byte[0];
+    byte[] BytesArray = new byte[0];
 
     public byte[] ReadBytes()
     {
-        short count = ReadShort();
+        if (Pointer == IntPtr.Zero)
+            return NullArray;
 
-        if (bArray.Length < count)
+        try
         {
-            Array.Resize(ref bArray, count);
+            Imports.BitStream_ReadArray(Pointer, ref BytesArray);
+            return BytesArray;
         }
-
-        for (int i = 0; i < count; i++)
-        {
-            bArray[i] = ReadByte();
-        }
-
-        return new ArraySegment<byte>(bArray, 0, count).Array;
-    }
-
-    //FLOAT[]
-    public void WriteArray(float[] array)
-    {
-        Write((short)array.Length);
-        for (int i = 0; i < array.Length; i++)
-        {
-            Write(array[i]);
-        }
-    }
-
-    public float[] ReadFloats()
-    {
-        short count = ReadShort();
-
-        if (flArray.Length < count)
-        {
-            Array.Resize(ref flArray, count);
-        }
-
-        for (int i = 0; i < count; i++)
-        {
-            flArray[i] = ReadFloat();
-        }
-
-        return new ArraySegment<float>(flArray, 0, count).Array;
+        catch { }
+        return NullArray;
     }
 }

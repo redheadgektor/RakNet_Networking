@@ -40,7 +40,7 @@ public static class Imports
 
     [DllImport(DLL_Name)]
     public static extern int Client_GetLowestPing(IntPtr p);
-
+	
     [DllImport(DLL_Name)]
     public static extern ulong Client_Guid(IntPtr p);
 
@@ -125,7 +125,7 @@ public static class Imports
 
     [DllImport(DLL_Name)]
     public static extern int Server_GetLowestPing(IntPtr p, ulong guid);
-
+	
     [DllImport(DLL_Name)]
     public static extern void Server_AllowQuery(IntPtr p, bool enabled);
 
@@ -212,100 +212,52 @@ public static class Imports
     public static extern void BitStream_WriteByte(IntPtr bitstream_pointer, byte value);
 
     [DllImport(DLL_Name)]
-    public static extern void BitStream_WriteByteDelta(IntPtr bitstream_pointer, byte value, byte last_value);
-
-    [DllImport(DLL_Name)]
     public static extern void BitStream_WriteByteCompressed(IntPtr bitstream_pointer, byte value);
-
-    [DllImport(DLL_Name)]
-    public static extern void BitStream_WriteByteCompressedDelta(IntPtr bitstream_pointer, byte value, byte last_value);
 
     [DllImport(DLL_Name)]
     public static extern byte BitStream_ReadByte(IntPtr bitstream_pointer);
 
     [DllImport(DLL_Name)]
-    public static extern byte BitStream_ReadByteDelta(IntPtr bitstream_pointer, byte last_value);
-
-    [DllImport(DLL_Name)]
     public static extern byte BitStream_ReadByteCompressed(IntPtr bitstream_pointer);
-
-    [DllImport(DLL_Name)]
-    public static extern byte BitStream_ReadByteCompressedDelta(IntPtr bitstream_pointer, byte last_value);
 
     /* SHORT */
     [DllImport(DLL_Name)]
     public static extern void BitStream_WriteShort(IntPtr bitstream_pointer, short value);
 
     [DllImport(DLL_Name)]
-    public static extern void BitStream_WriteShortDelta(IntPtr bitstream_pointer, short value, short last_value);
-
-    [DllImport(DLL_Name)]
     public static extern void BitStream_WriteShortCompressed(IntPtr bitstream_pointer, short value);
-
-    [DllImport(DLL_Name)]
-    public static extern void BitStream_WriteShortCompressedDelta(IntPtr bitstream_pointer, short value, short last_value);
 
     [DllImport(DLL_Name)]
     public static extern short BitStream_ReadShort(IntPtr bitstream_pointer);
 
     [DllImport(DLL_Name)]
-    public static extern short BitStream_ReadShortDelta(IntPtr bitstream_pointer, short last_value);
-
-    [DllImport(DLL_Name)]
     public static extern short BitStream_ReadShortCompressed(IntPtr bitstream_pointer);
-
-    [DllImport(DLL_Name)]
-    public static extern short BitStream_ReadShortCompressedDelta(IntPtr bitstream_pointer, short last_value);
 
     /* INT */
     [DllImport(DLL_Name)]
     public static extern void BitStream_WriteInt(IntPtr bitstream_pointer, int value);
 
     [DllImport(DLL_Name)]
-    public static extern void BitStream_WriteIntDelta(IntPtr bitstream_pointer, int value, int last_value);
-
-    [DllImport(DLL_Name)]
     public static extern void BitStream_WriteIntCompressed(IntPtr bitstream_pointer, int value);
 
     [DllImport(DLL_Name)]
-    public static extern void BitStream_WriteIntCompressedDelta(IntPtr bitstream_pointer, int value, int last_value);
-
-    [DllImport(DLL_Name)]
     public static extern int BitStream_ReadInt(IntPtr bitstream_pointer);
-
-    [DllImport(DLL_Name)]
-    public static extern int BitStream_ReadIntDelta(IntPtr bitstream_pointer, int last_value);
-
+	
     [DllImport(DLL_Name)]
     public static extern int BitStream_ReadIntCompressed(IntPtr bitstream_pointer);
-
-    [DllImport(DLL_Name)]
-    public static extern int BitStream_ReadIntCompressedDelta(IntPtr bitstream_pointer, int last_value);
 
     /* FLOAT */
     [DllImport(DLL_Name)]
     public static extern void BitStream_WriteFloat(IntPtr bitstream_pointer, float value);
 
     [DllImport(DLL_Name)]
-    public static extern void BitStream_WriteFloatDelta(IntPtr bitstream_pointer, float value, float last_value, float diff = 0.001f);
-
-    [DllImport(DLL_Name)]
     public static extern void BitStream_WriteFloatCompressed(IntPtr bitstream_pointer, float value);
-
-    [DllImport(DLL_Name)]
-    public static extern void BitStream_WriteFloatCompressedDelta(IntPtr bitstream_pointer, float value, float last_value);
 
     [DllImport(DLL_Name)]
     public static extern float BitStream_ReadFloat(IntPtr bitstream_pointer);
 
     [DllImport(DLL_Name)]
-    public static extern float BitStream_ReadFloatDelta(IntPtr bitstream_pointer, float last_value);
-
-    [DllImport(DLL_Name)]
     public static extern float BitStream_ReadFloatCompressed(IntPtr bitstream_pointer);
-
-    [DllImport(DLL_Name)]
-    public static extern float BitStream_ReadFloatCompressedDelta(IntPtr bitstream_pointer, float last_value);
 
     /* FLOAT16 */
     [DllImport(DLL_Name)]
@@ -319,26 +271,35 @@ public static class Imports
     public static extern void BitStream_WriteLong(IntPtr bitstream_pointer, long value);
 
     [DllImport(DLL_Name)]
-    public static extern void BitStream_WriteLongDelta(IntPtr bitstream_pointer, long value, long last_value);
-
-    [DllImport(DLL_Name)]
     public static extern void BitStream_WriteLongCompressed(IntPtr bitstream_pointer, long value);
-
-    [DllImport(DLL_Name)]
-    public static extern void BitStream_WriteLongCompressedDelta(IntPtr bitstream_pointer, long value, long last_value);
-
+	
     [DllImport(DLL_Name)]
     public static extern long BitStream_ReadLong(IntPtr bitstream_pointer);
 
     [DllImport(DLL_Name)]
-    public static extern long BitStream_ReadLongDelta(IntPtr bitstream_pointer, long last_value);
-
-    [DllImport(DLL_Name)]
     public static extern long BitStream_ReadLongCompressed(IntPtr bitstream_pointer);
-
+	
+	/* STRING */
+	[DllImport(DLL_Name)]
+    public static extern void BitStream_WriteString(IntPtr bitstream_pointer, string value);
+	
+	[DllImport(DLL_Name)]
+    public static extern IntPtr BitStream_ReadString(IntPtr bitstream_pointer);
+	
+	[DllImport(DLL_Name)]
+    public static extern void BitStream_WriteArray(IntPtr bitstream_pointer, byte[] array);
+	
+	[DllImport(DLL_Name)]
+    public static extern void BitStream_ReadArray(IntPtr bitstream_pointer, ref byte[] array);
+	
+	/* Data Compressor */
     [DllImport(DLL_Name)]
-    public static extern long BitStream_ReadLongCompressedDelta(IntPtr bitstream_pointer, long last_value);
+    public static extern void DataCompressor_Compress(byte[] data, int data_size, IntPtr bitstream_pointer);
+	
+	[DllImport(DLL_Name)]
+    public static extern int DataCompressor_Decompress(IntPtr bitstream_pointer, ref byte[] data);
 
+	/* String From IntPtr */
     public static string IntPtrToStringAnsi(IntPtr p)
     {
         return Marshal.PtrToStringAnsi(p);
