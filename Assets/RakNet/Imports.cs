@@ -15,7 +15,7 @@ public static class Imports
     public static extern IntPtr Client_Init();
 
     [DllImport(DLL_Name)]
-    public static extern void Client_Uninit(IntPtr p);
+    public static extern void Client_Destroy();
 
     [DllImport(DLL_Name)]
     public static extern bool Client_IsActive(IntPtr p);
@@ -24,10 +24,13 @@ public static class Imports
     public static extern ClientConnectResult Client_Connect(IntPtr p, string address, ushort port, string password, int attepmts);
 
     [DllImport(DLL_Name)]
-    public static extern void Client_Disconnect(IntPtr p);
+    public static extern void Client_Disconnect(IntPtr p, string message = "");
 
     [DllImport(DLL_Name)]
-    public static extern IntPtr Client_GetPacket(IntPtr p, out uint packet_size);
+    public static extern IntPtr Client_GetPacket(IntPtr p, out uint packet_size, out ulong local_time);
+
+    [DllImport(DLL_Name)]
+    public static extern void Client_DeallocPacket(IntPtr p, IntPtr p2);
 
     [DllImport(DLL_Name)]
     public static extern byte Client_Send(IntPtr p, IntPtr b, PacketPriority priority, PacketReliability reliability, byte channel);
@@ -44,30 +47,27 @@ public static class Imports
     [DllImport(DLL_Name)]
     public static extern ulong Client_Guid(IntPtr p);
 
-    [DllImport(DLL_Name)]
-    public static extern uint GetClientInstances();
-
-    [DllImport(DLL_Name)]
-    public static extern void UninitClientInstances();
-
     /* SERVER */
     [DllImport(DLL_Name)]
     public static extern IntPtr Server_Init();
 
     [DllImport(DLL_Name)]
-    public static extern void Server_Uninit(IntPtr p);
+    public static extern void Server_Destroy();
 
     [DllImport(DLL_Name)]
     public static extern ServerStartResult Server_Start(IntPtr p, string address, ushort port, ushort max_connections, bool insecure);
 
     [DllImport(DLL_Name)]
-    public static extern void Server_Stop(IntPtr p);
+    public static extern void Server_Stop(IntPtr p, string message="");
 
     [DllImport(DLL_Name)]
     public static extern IntPtr Server_IP(IntPtr p);
 
     [DllImport(DLL_Name)]
-    public static extern IntPtr Server_GetPacket(IntPtr p, out ulong guid, out uint packet_size);
+    public static extern IntPtr Server_GetPacket(IntPtr p, out ushort connectionIndex, out ulong guid, out uint packet_size, out ulong local_time);
+
+    [DllImport(DLL_Name)]
+    public static extern void Server_DeallocPacket(IntPtr p, IntPtr p2);
 
     [DllImport(DLL_Name)]
     public static extern void Server_SetMaxConnections(IntPtr p, ushort max_connections);
@@ -100,7 +100,7 @@ public static class Imports
     public static extern ushort Server_GetMaximumConnections(IntPtr p);
 
     [DllImport(DLL_Name)]
-    public static extern void Server_CloseConnection(IntPtr p, ulong guid, bool send_disconnect_notify);
+    public static extern void Server_CloseConnection(IntPtr p, ulong guid, bool send_disconnect_notify, string disconnect_message);
 
     [DllImport(DLL_Name)]
     public static extern uint Server_SendToClient(IntPtr p, IntPtr b, ulong guid, PacketPriority priority, PacketReliability reliability, byte channel);
@@ -135,19 +135,7 @@ public static class Imports
     [DllImport(DLL_Name)]
     public static extern void Server_SetQueryResponce(IntPtr p, byte[] data);
 
-    [DllImport(DLL_Name)]
-    public static extern uint GetServerInstances();
-
-    [DllImport(DLL_Name)]
-    public static extern void UninitServerInstances();
-
     /* SHARED */
-    [DllImport(DLL_Name)]
-    public static extern int Shared_PacketsInBuffer(IntPtr p);
-
-    [DllImport(DLL_Name)]
-    public static extern bool Shared_HasPackets(IntPtr p);
-
     [DllImport(DLL_Name)]
     public static extern IntPtr Shared_GetAddress(IntPtr p, ulong guid, bool with_port);
 
@@ -163,6 +151,17 @@ public static class Imports
     [DllImport(DLL_Name)]
     public static extern bool Shared_Statistics(IntPtr p, uint index, ref RakNetStatistics statistics);
 
+    [DllImport(DLL_Name)]
+    public static extern bool Shared_IsAllowSending(IntPtr p);
+
+	[DllImport(DLL_Name)]
+    public static extern void Shared_AllowSending(IntPtr p, bool allow);
+	
+	[DllImport(DLL_Name)]
+    public static extern bool Shared_IsAllowReceiving(IntPtr p);
+
+	[DllImport(DLL_Name)]
+    public static extern void Shared_AllowReceiving(IntPtr p, bool allow);
 
     /* BITSTREAM */
     [DllImport(DLL_Name)]
@@ -285,6 +284,12 @@ public static class Imports
 	
 	[DllImport(DLL_Name)]
     public static extern IntPtr BitStream_ReadString(IntPtr bitstream_pointer);
+	
+	[DllImport(DLL_Name)]
+    public static extern void BitStream_WriteCompressedString(IntPtr bitstream_pointer, string value, ushort languageId, bool writelanguageId);
+	
+	[DllImport(DLL_Name)]
+    public static extern IntPtr BitStream_ReadCompressedString(IntPtr bitstream_pointer, bool readLanguageId);
 	
 	[DllImport(DLL_Name)]
     public static extern void BitStream_WriteArray(IntPtr bitstream_pointer, byte[] array);
