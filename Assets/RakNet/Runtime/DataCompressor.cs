@@ -1,6 +1,5 @@
 public class DataCompressor
 {
-	//Don't compress small amounts of data!
     public static void Compress(BitStream bitStream, byte[] data)
     {
         try
