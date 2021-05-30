@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Security;
-using System.Text;
-using UnityEngine;
 
 /// <summary>
 /// Pooled bitstream
@@ -374,81 +372,23 @@ public class BitStream : IDisposable
         WriteCompressed((long)value);
     }
 
-    public void Write(string value)
+    public void Write(string value, bool compressed = false, ushort languageId = 0, bool writeLanguage = false)
     {
         if (Pointer == IntPtr.Zero)
             return;
 
         try
         {
-            Imports.BitStream_WriteString(Pointer, value);
+            if (!compressed)
+            {
+                Imports.BitStream_WriteString(Pointer, value);
+            }
+            else
+            {
+                Imports.BitStream_WriteCompressedString(Pointer, value, languageId, writeLanguage);
+            }
         }
         catch { }
-    }
-
-    public void Write(Vector2 value)
-    {
-        Write(value.x);
-        Write(value.y);
-    }
-
-    public void Write(Vector3 value, bool compressed = false)
-    {
-        if (!compressed)
-        {
-            Write(value.x);
-            Write(value.y);
-            Write(value.z);
-        }
-        else
-        {
-            float m = value.magnitude;
-            Write(m);
-            WriteCompressed(value.x / m);
-            WriteCompressed(value.y / m);
-            WriteCompressed(value.z / m);
-        }
-    }
-
-    public void WriteDelta(Vector3 value, Vector3 last_value, float diff = 0.001f)
-    {
-        short changeMask = 0;
-        if (Mathf.Abs(value.x - last_value.x) >= diff) { changeMask |= 1 << 0; }
-        if (Mathf.Abs(value.y - last_value.y) >= diff) { changeMask |= 1 << 1; }
-        if (Mathf.Abs(value.z - last_value.z) >= diff) { changeMask |= 1 << 2; }
-
-        Write(changeMask);
-        if ((changeMask & 1 << 0) != 0) { Write(value.x); }
-        if ((changeMask & 1 << 1) != 0) { Write(value.y); }
-        if ((changeMask & 1 << 2) != 0) { Write(value.z); }
-    }
-
-    public void Write(Vector4 value)
-    {
-        Write(value.x);
-        Write(value.y);
-        Write(value.z);
-        Write(value.w);
-    }
-
-    public void Write(Quaternion value, bool compressed = false)
-    {
-        if (!compressed)
-        {
-            Write(value.eulerAngles);
-        }
-        else
-        {
-            Write(value.x, -1f, 1f);
-            Write(value.y, -1f, 1f);
-            Write(value.z, -1f, 1f);
-            Write(value.w, -1f, 1f);
-        }
-    }
-
-    public void WriteDelta(Quaternion value, Quaternion last_value, float diff = 0.001f)
-    {
-        WriteDelta(value.eulerAngles, last_value.eulerAngles, diff);
     }
 
     public byte ReadByte()
@@ -584,62 +524,22 @@ public class BitStream : IDisposable
         return (ulong)ReadLongCompressed();
     }
 
-    public Vector2 ReadVector2()
-    {
-        float x = ReadFloat();
-        float y = ReadFloat();
-        return new Vector2(x, y);
-    }
-
-    public Vector3 ReadVector3(bool compressed = false)
-    {
-        if (!compressed)
-        {
-            float x = ReadFloat();
-            float y = ReadFloat();
-            float z = ReadFloat();
-
-            return new Vector3(x, y, z);
-        }
-        else
-        {
-            float m = ReadFloat();
-            float x = ReadFloatCompressed() * m;
-            float y = ReadFloatCompressed() * m;
-            float z = ReadFloatCompressed() * m;
-            return new Vector3(x, y, z);
-        }
-    }
-
-    public Vector4 ReadVector4()
-    {
-        float x = ReadFloat();
-        float y = ReadFloat();
-        float z = ReadFloat();
-        float w = ReadFloat();
-        return new Vector4(x, y, z, w);
-    }
-
-    public Quaternion ReadQuaternion(bool compressed = false)
-    {
-        if (!compressed)
-        {
-            return Quaternion.Euler(ReadVector3());
-        }
-        else
-        {
-            return new Quaternion(ReadFloat16(-1f, 1f), ReadFloat16(-1f, 1f), ReadFloat16(-1f, 1f), ReadFloat16(-1f, 1f));
-        }
-    }
-
-    public string ReadString(bool unicode = false)
+    public string ReadString(bool unicode = false, bool compressed = false, bool readLanguageId = false)
     {
         if (Pointer == IntPtr.Zero)
             return string.Empty;
 
         try
         {
-            IntPtr string_ptr = Imports.BitStream_ReadString(Pointer);
+            IntPtr string_ptr = IntPtr.Zero;
+            if (!compressed)
+            {
+                string_ptr = Imports.BitStream_ReadString(Pointer);
+            }
+            else
+            {
+                string_ptr = Imports.BitStream_ReadCompressedString(Pointer, readLanguageId);
+            }
 
             if (unicode)
             {
