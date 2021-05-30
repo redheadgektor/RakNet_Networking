@@ -16,10 +16,11 @@ public interface IRakClient
     /// <summary>
     /// On Disconnected (DisconnectReason reason)
     /// </summary>
-    void OnDisconnected(DisconnectReason reason);
+    void OnDisconnected(DisconnectReason reason, string message = "");
 
     /// <summary>
     /// On Received Data From Server (byte packet_id, uint packet_size, BitStream bitStream)
     /// </summary>
-    void OnReceived(byte packet_id, uint packet_size, BitStream bitStream);
+    /// <param name="local_time">local time when the packet is received (in ms)</param>
+    void OnReceived(byte packet_id, uint packet_size, BitStream bitStream, ulong local_time);
 }

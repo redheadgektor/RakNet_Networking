@@ -58,13 +58,13 @@ internal static class RakNetLoop
         return false;
     }
 
-    [RuntimeInitializeOnLoadMethod]
-    static void RuntimeInitializeOnLoad()
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    static void Initialize()
     {
 #if UNITY_EDITOR
         UnityEditor.Compilation.CompilationPipeline.compilationFinished += delegate (object o)
         {
-            UninitAllInstances();
+            DestroyAll();
         };
         //if app non playing dont init RakNet and loop
         if (!UnityEditor.EditorApplication.isPlaying)
@@ -77,29 +77,35 @@ internal static class RakNetLoop
 
         PlayerLoopSystem playerLoop = PlayerLoop.GetDefaultPlayerLoop();
         AddToPlayerLoop(EarlyUpdate, typeof(RakNetLoop), ref playerLoop, typeof(EarlyUpdate), AddMode.End);
-        AddToPlayerLoop(PreLateUpdate, typeof(RakNetLoop), ref playerLoop, typeof(PreLateUpdate), AddMode.End);
         PlayerLoop.SetPlayerLoop(playerLoop);
 
-        Application.quitting += UninitAllInstances;
+        Application.quitting += DestroyAll;
 
     }
 
 #if UNITY_EDITOR
-    [UnityEditor.MenuItem("RakNet/Uninitialize all")]
+    [UnityEditor.MenuItem("RakNet/Destroy all")]
 #endif
-    static void UninitAllInstances()
+    static void DestroyAll()
     {
-        uint before = RakServer.NativeInstances();
-        RakServer.UninitInstances();
-        uint after = RakServer.NativeInstances();
+        RakServer.Destroy();
+        RakClient.Destroy();
+    }
 
-        Debug.Log("Unitialized " + (before - after) + " server instances");
+#if UNITY_EDITOR
+    [UnityEditor.MenuItem("RakNet/Destroy client")]
+#endif
+    static void DestroyClient()
+    {
+        RakClient.Destroy();
+    }
 
-        before = RakClient.NativeInstances();
-        RakClient.UninitInstances();
-        after = RakClient.NativeInstances();
-
-        Debug.Log("Unitialized " + (before - after) + " client instances");
+#if UNITY_EDITOR
+    [UnityEditor.MenuItem("RakNet/Destroy server")]
+#endif
+    static void DestroyServer()
+    {
+        RakServer.Destroy();
     }
 
     static void EarlyUpdate()
@@ -110,13 +116,7 @@ internal static class RakNetLoop
             return;
         }
 #endif
-        RakServer.EarlyUpdate();
-        RakClient.EarlyUpdate();
-    }
-
-    static void PreLateUpdate()
-    {
-        //RakServer.PreLateUpdate();
-        //RakClient.PreLateUpdate();
+        RakServer.Update();
+        RakClient.Update();
     }
 }

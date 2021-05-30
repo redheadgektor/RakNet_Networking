@@ -54,12 +54,12 @@ public class SampleClient : MonoBehaviour, IRakClient
         Debug.Log("[SampleClient] Connected to "+address+":"+port);
     }
 
-    void IRakClient.OnDisconnected(DisconnectReason reason)
+    void IRakClient.OnDisconnected(DisconnectReason reason, string message)
     {
-        Debug.Log("[SampleClient] Disconnected "+reason);
+        Debug.Log("[SampleClient] Disconnected "+reason + " -> "+message);
     }
 
-    void IRakClient.OnReceived(byte packet_id, uint packet_size, BitStream bitStream)
+    void IRakClient.OnReceived(byte packet_id, uint packet_size, BitStream bitStream, ulong local_time)
     {
         switch ((SamplePacketID)packet_id)
         {

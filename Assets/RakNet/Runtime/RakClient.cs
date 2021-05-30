@@ -4,7 +4,11 @@ using UnityEngine;
 
 public class RakClient
 {
+#if UNITY_EDITOR
+    public static IntPtr Pointer = IntPtr.Zero;
+#else
     static IntPtr Pointer = IntPtr.Zero;
+#endif
 
     /// <summary>
     /// Client initialized and ready to connect?
@@ -44,7 +48,7 @@ public class RakClient
         interfaces.Remove(client_interface);
     }
 
-    internal static void EarlyUpdate()
+    internal static void Update()
     {
         if (Initialized)
         {
@@ -61,10 +65,9 @@ public class RakClient
 
             try
             {
-                while (Imports.Shared_HasPackets(Pointer))
+                IntPtr packet_ptr = IntPtr.Zero;
+                while ((packet_ptr = Imports.Client_GetPacket(Pointer, out uint packet_size, out ulong local_time)) != IntPtr.Zero)
                 {
-                    IntPtr packet_ptr = Imports.Client_GetPacket(Pointer, out uint packet_size);
-
                     using (PooledBitStream bitStream = PooledBitStream.GetBitStream())
                     {
                         bitStream.ReadPacket(packet_ptr);
@@ -78,6 +81,9 @@ public class RakClient
 
                             switch (internal_packet_id)
                             {
+                                case InternalPacketID.ID_ALREADY_CONNECTED:
+                                    break;
+
                                 case InternalPacketID.ID_CONNECTION_REQUEST_ACCEPTED:
                                     for (int i = 0; i < interfaces.Count; i++)
                                     {
@@ -90,7 +96,7 @@ public class RakClient
                                     break;
 
                                 case InternalPacketID.ID_DISCONNECTION_NOTIFICATION:
-                                    Disconnect(DisconnectReason.ConnectionClosed);
+                                    Disconnect(DisconnectReason.ConnectionClosed, bitStream.ReadString());
                                     break;
 
                                 case InternalPacketID.ID_CONNECTION_LOST:
@@ -140,11 +146,14 @@ public class RakClient
                             {
                                 if (interfaces[i] != null)
                                 {
-                                    interfaces[i].OnReceived(packet_id, packet_size, bitStream);
+                                    interfaces[i].OnReceived(packet_id, packet_size, bitStream, local_time);
                                 }
                             }
                         }
                     }
+
+                    //returning packet data to the heap for re-use
+                    Imports.Client_DeallocPacket(Pointer, packet_ptr);
                 }
 
                 /* UPDATE STATS */
@@ -192,14 +201,13 @@ public class RakClient
         }
     }
 
-    internal static void Uninit()
+    internal static void Destroy()
     {
         if (Initialized)
         {
             try
             {
-                Disconnect();
-                Imports.Client_Uninit(Pointer);
+                Imports.Client_Destroy();
             }
             catch (DllNotFoundException dll_ex)
             {
@@ -219,42 +227,6 @@ public class RakClient
         }
     }
 
-    internal static uint NativeInstances()
-    {
-        try
-        {
-            return Imports.GetClientInstances();
-        }
-        catch (DllNotFoundException dll_ex)
-        {
-            Debug.LogError("[RakClient] " + dll_ex);
-        }
-        catch (EntryPointNotFoundException entry_ex)
-        {
-            Debug.LogError("[RakClient] " + entry_ex);
-        }
-
-        return 0;
-    }
-
-    internal static void UninitInstances()
-    {
-        try
-        {
-            Uninit();
-            Imports.UninitClientInstances();
-        }
-        catch (DllNotFoundException dll_ex)
-        {
-            Debug.LogError("[RakClient] " + dll_ex);
-        }
-        catch (EntryPointNotFoundException entry_ex)
-        {
-            Debug.LogError("[RakClient] " + entry_ex);
-        }
-    }
-
-
     /* PUBLIC */
 
     /// <summary>
@@ -267,7 +239,8 @@ public class RakClient
         server_password = password;
         ClientConnectResult result = Imports.Client_Connect(Pointer, address, port, password, attemps);
 
-        if (result == ClientConnectResult.Connecting) { State = ClientState.IS_CONNECTING; }
+        if (result == ClientConnectResult.Connecting) { State = ClientState.IS_CONNECTING; } 
+        else if(result != ClientConnectResult.AlreadyConnected || result != ClientConnectResult.AlreadyConnecting) { State = ClientState.IS_DISCONNECTED; }
 
         return result;
     }
@@ -275,11 +248,22 @@ public class RakClient
     /// <summary>
     /// Internal only
     /// </summary>
-    static void Disconnect(DisconnectReason reason = DisconnectReason.ByUser)
+    static void Disconnect(DisconnectReason reason = DisconnectReason.ByUser, string message = "")
     {
         try
         {
-            Imports.Client_Disconnect(Pointer);
+            if (reason == DisconnectReason.ByUser)
+            {
+                Imports.Client_Disconnect(Pointer, message);
+            }
+            else if(reason == DisconnectReason.ConnectionClosed)
+            {
+                Imports.Client_Disconnect(Pointer, message);
+            }
+            else
+            {
+                Imports.Client_Disconnect(Pointer, string.Empty);
+            }
         }
         catch (DllNotFoundException dll_ex)
         {
@@ -289,15 +273,13 @@ public class RakClient
         {
             Debug.LogError("[RakClient] " + entry_ex);
         }
-        finally
+
+        State = ClientState.IS_DISCONNECTED;
+        for (int i = 0; i < interfaces.Count; i++)
         {
-            State = ClientState.IS_DISCONNECTED;
-            for (int i = 0; i < interfaces.Count; i++)
+            if (interfaces[i] != null)
             {
-                if (interfaces[i] != null)
-                {
-                    interfaces[i].OnDisconnected(reason);
-                }
+                interfaces[i].OnDisconnected(reason, message);
             }
         }
     }
@@ -305,9 +287,88 @@ public class RakClient
     /// <summary>
     /// Disconnect
     /// </summary>
-    public static void Disconnect()
+    public static void Disconnect(string message)
     {
-        Disconnect(DisconnectReason.ByUser);
+        Disconnect(DisconnectReason.ByUser, message);
+    }
+
+    /// <summary>
+    /// Disconnect
+    /// </summary>
+    public static void Disconnect() => Disconnect(string.Empty);
+
+    /// <summary>
+    /// This parameter allows or disables sending data
+    ///  true - data will be sent to the server
+    ///  false - data will not be sent to the server
+    /// </summary>
+    public static bool AllowSending
+    {
+        get
+        {
+            try
+            {
+                return Imports.Shared_IsAllowSending(Pointer);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        set
+        {
+            try
+            {
+                Imports.Shared_AllowSending(Pointer, value);
+            }
+            catch (DllNotFoundException dll_ex)
+            {
+                Debug.LogError("[RakClient] " + dll_ex);
+                return;
+            }
+            catch (EntryPointNotFoundException entry_ex)
+            {
+                Debug.LogError("[RakClient] " + entry_ex);
+                return;
+            }
+        }
+    }
+
+    /// <summary>
+    /// This parameter enable or disables receiving data at socket level
+    ///  true - data will be received from the server
+    ///  false - data will not be received from the server
+    /// </summary>
+    public static bool AllowReceiving
+    {
+        get
+        {
+            try
+            {
+                return Imports.Shared_IsAllowReceiving(Pointer);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        set
+        {
+            try
+            {
+                Imports.Shared_AllowReceiving(Pointer, value);
+            }
+            catch (DllNotFoundException dll_ex)
+            {
+                Debug.LogError("[RakClient] " + dll_ex);
+                return;
+            }
+            catch (EntryPointNotFoundException entry_ex)
+            {
+                Debug.LogError("[RakClient] " + entry_ex);
+                return;
+            }
+        }
     }
 
     /// <summary>

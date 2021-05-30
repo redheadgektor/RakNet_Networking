@@ -4,7 +4,11 @@ using UnityEngine;
 
 public class RakServer
 {
+#if UNITY_EDITOR
+    public static IntPtr Pointer = IntPtr.Zero;
+#else
     static IntPtr Pointer = IntPtr.Zero;
+#endif
 
     /// <summary>
     /// Server initialized and ready to start
@@ -34,10 +38,6 @@ public class RakServer
     /// </summary>
     public static OnServerStopCallback OnServerStop;
 
-    static IntPtr packet_ptr = IntPtr.Zero;
-
-    static byte packet_id = 0;
-
     static List<IRakServer> interfaces = new List<IRakServer>();
 
     public static void RegisterInterface(IRakServer server_interface)
@@ -50,21 +50,20 @@ public class RakServer
         interfaces.Remove(server_interface);
     }
 
-    internal static void EarlyUpdate()
+    internal static void Update()
     {
         if (Initialized)
         {
             try
             {
-                while (Imports.Shared_HasPackets(Pointer))
+                IntPtr packet_ptr = IntPtr.Zero;
+                while ((packet_ptr = Imports.Server_GetPacket(Pointer, out ushort connectionIndex, out ulong receiver_guid, out uint packet_size, out ulong local_time)) != IntPtr.Zero)
                 {
-                    packet_ptr = Imports.Server_GetPacket(Pointer, out ulong receiver_guid, out uint packet_size);
-
                     using (PooledBitStream bitStream = PooledBitStream.GetBitStream())
                     {
                         bitStream.ReadPacket(packet_ptr);
 
-                        packet_id = bitStream.ReadByte();
+                        byte packet_id = bitStream.ReadByte();
 
                         if ((InternalPacketID)packet_id < InternalPacketID.ID_USER_PACKET_ENUM)
                         {
@@ -75,17 +74,18 @@ public class RakServer
                                     {
                                         if (interfaces[i] != null)
                                         {
-                                            interfaces[i].OnConnected(receiver_guid);
+                                            interfaces[i].OnConnected(connectionIndex, receiver_guid);
                                         }
                                     }
                                     break;
 
                                 case InternalPacketID.ID_DISCONNECTION_NOTIFICATION:
+                                    string message = bitStream.ReadString();
                                     for (int i = 0; i < interfaces.Count; i++)
                                     {
                                         if (interfaces[i] != null)
                                         {
-                                            interfaces[i].OnDisconnected(receiver_guid, DisconnectReason.ConnectionClosed);
+                                            interfaces[i].OnDisconnected(connectionIndex, receiver_guid, DisconnectReason.ConnectionClosed, message);
                                         }
                                     }
                                     break;
@@ -95,7 +95,7 @@ public class RakServer
                                     {
                                         if (interfaces[i] != null)
                                         {
-                                            interfaces[i].OnDisconnected(receiver_guid, DisconnectReason.ConnectionLost);
+                                            interfaces[i].OnDisconnected(connectionIndex, receiver_guid, DisconnectReason.ConnectionLost, string.Empty);
                                         }
                                     }
                                     break;
@@ -107,11 +107,14 @@ public class RakServer
                             {
                                 if (interfaces[i] != null)
                                 {
-                                    interfaces[i].OnReceived(packet_id, receiver_guid, bitStream);
+                                    interfaces[i].OnReceived(packet_id, connectionIndex, receiver_guid, bitStream, local_time);
                                 }
                             }
                         }
                     }
+
+                    //returning packet data to the heap for re-use
+                    Imports.Server_DeallocPacket(Pointer, packet_ptr);
                 }
             }
             catch (DllNotFoundException dll_ex)
@@ -156,14 +159,13 @@ public class RakServer
         }
     }
 
-    internal static void Uninit()
+    internal static void Destroy()
     {
         if (Initialized)
         {
             try
             {
-                Stop();
-                Imports.Server_Uninit(Pointer);
+                Imports.Server_Destroy();
             }
             catch (DllNotFoundException dll_ex)
             {
@@ -180,41 +182,6 @@ public class RakServer
 
                 Debug.Log("[RakServer] Unitialized...");
             }
-        }
-    }
-
-    internal static uint NativeInstances()
-    {
-        try
-        {
-            return Imports.GetServerInstances();
-        }
-        catch (DllNotFoundException dll_ex)
-        {
-            Debug.LogError("[RakServer] " + dll_ex);
-        }
-        catch (EntryPointNotFoundException entry_ex)
-        {
-            Debug.LogError("[RakServer] " + entry_ex);
-        }
-
-        return 0;
-    }
-
-    internal static void UninitInstances()
-    {
-        try
-        {
-            Uninit();
-            Imports.UninitServerInstances();
-        }
-        catch (DllNotFoundException dll_ex)
-        {
-            Debug.LogError("[RakServer] " + dll_ex);
-        }
-        catch (EntryPointNotFoundException entry_ex)
-        {
-            Debug.LogError("[RakServer] " + entry_ex);
         }
     }
 
@@ -257,14 +224,14 @@ public class RakServer
     /// <summary>
     /// Stop server
     /// </summary>
-    public static void Stop()
+    public static void Stop(string message = "Shutting down!")
     {
         if (State == ServerState.NOT_STARTED || State == ServerState.STOPPED)
             return;
 
         try
         {
-            Imports.Server_Stop(Pointer);
+            Imports.Server_Stop(Pointer, message);
         }
         catch (DllNotFoundException dll_ex)
         {
@@ -305,6 +272,80 @@ public class RakServer
     }
 
     /// <summary>
+    /// This parameter allows or disables sending data
+    ///  true - data will be sent to the server
+    ///  false - data will not be sent to the server
+    /// </summary>
+    public static bool AllowSending
+    {
+        get
+        {
+            try
+            {
+                return Imports.Shared_IsAllowSending(Pointer);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        set
+        {
+            try
+            {
+                Imports.Shared_AllowSending(Pointer, value);
+            }
+            catch (DllNotFoundException dll_ex)
+            {
+                Debug.LogError("[RakClient] " + dll_ex);
+                return;
+            }
+            catch (EntryPointNotFoundException entry_ex)
+            {
+                Debug.LogError("[RakClient] " + entry_ex);
+                return;
+            }
+        }
+    }
+
+    /// <summary>
+    /// This parameter enable or disables receiving data at socket level
+    ///  true - data will be receive from the server
+    ///  false - data will not be receive from the server
+    /// </summary>
+    public static bool AllowReceiving
+    {
+        get
+        {
+            try
+            {
+                return Imports.Shared_IsAllowReceiving(Pointer);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        set
+        {
+            try
+            {
+                Imports.Shared_AllowReceiving(Pointer, value);
+            }
+            catch (DllNotFoundException dll_ex)
+            {
+                Debug.LogError("[RakClient] " + dll_ex);
+                return;
+            }
+            catch (EntryPointNotFoundException entry_ex)
+            {
+                Debug.LogError("[RakClient] " + entry_ex);
+                return;
+            }
+        }
+    }
+
+    /// <summary>
     /// Send to client using guid
     /// </summary>
     public static uint SendToClient(BitStream bitStream, ulong guid, PacketPriority priority = PacketPriority.IMMEDIATE_PRIORITY, PacketReliability reliability = PacketReliability.UNRELIABLE, byte channel = 0)
@@ -332,11 +373,11 @@ public class RakServer
     /// Close connection with the specified client guid
     /// </summary>
     /// <param name="send_disconnect_notify">Notify the client that the server has closed the connection?</param>
-    public static void CloseConnection(ulong guid, bool send_disconnect_notify = true)
+    public static void CloseConnection(ulong guid, bool send_disconnect_notify = true, string disconnect_message = "")
     {
         try
         {
-            Imports.Server_CloseConnection(Pointer, guid, send_disconnect_notify);
+            Imports.Server_CloseConnection(Pointer, guid, send_disconnect_notify, disconnect_message);
         }
         catch (DllNotFoundException dll_ex)
         {
@@ -616,7 +657,7 @@ public class RakServer
     /// <summary>
     /// Get Client statistics
     /// </summary>
-    public bool GetStatistics(uint index, ref RakNetStatistics statistics)
+    public static bool GetStatistics(uint index, ref RakNetStatistics statistics)
     {
         try
         {
@@ -635,9 +676,10 @@ public class RakServer
     }
 
     /// <summary>
-    /// Add ban
+    /// Add ban by IP-Address
     /// </summary>
-    /// <param name="second">ban length in seconds   0 - is infinity</param>
+    /// <param name="address">You can use * for a wildcard address, such as 127.0.0.* will ban all IP addresses starting with 128.0.0</param>
+    /// <param name="second">Ban length in seconds   0 - is infinity</param>
     /// <returns></returns>
     public static void AddBanIP(string address, int second = 0)
     {

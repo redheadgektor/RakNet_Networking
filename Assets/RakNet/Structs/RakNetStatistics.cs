@@ -1,7 +1,8 @@
 ﻿/// Store Statistics information related to network usage 
+[System.Serializable]
 public struct RakNetStatistics
 {
-	unsafe fixed ulong valueOverLastSecond[7];
+	unsafe fixed ulong valueOverLastSecond[11];
 
 	/// <summary>
 	/// For each type in RNSPerSecondMetrics, what is the value over the last 1 second?
@@ -14,7 +15,7 @@ public struct RakNetStatistics
 		}
 	}
 
-	unsafe fixed ulong runningTotal[7];
+	unsafe fixed ulong runningTotal[11];
 
 	/// <summary>
 	/// For each type in RNSPerSecondMetrics, what is the total value over the lifetime of the connection?
@@ -27,7 +28,7 @@ public struct RakNetStatistics
 		}
 	}
 
-	internal ulong connectionStartTime;
+	ulong connectionStartTime;
 
 	/// <summary>
 	/// When did the connection start?
@@ -37,7 +38,7 @@ public struct RakNetStatistics
 		return connectionStartTime;
 	}
 
-	internal ulong connectionTime;
+	ulong connectionTime;
 
 	/// <summary>
 	/// How much time has passed since connection?
@@ -89,12 +90,12 @@ public struct RakNetStatistics
 		return BPSLimitByOutgoingBandwidthLimit;
 	}
 
-	unsafe fixed uint messageInSendBuffer[4];
+	unsafe fixed ulong messageInSendBuffer[4];
 
 	/// <summary>
 	/// For each priority level, how many messages are waiting to be sent out?
 	/// </summary>
-	public double GetMessagesInSendBuffer(PacketPriority packetPriority)
+	public ulong GetMessagesInSendBuffer(PacketPriority packetPriority)
 	{
 		unsafe
 		{
@@ -102,12 +103,12 @@ public struct RakNetStatistics
 		}
 	}
 
-	unsafe fixed double bytesInSendBuffer[4];
+	unsafe fixed ulong bytesInSendBuffer[4];
 
 	/// <summary>
 	/// For each priority level, how many bytes are waiting to be sent out?
 	/// </summary>
-	public double GetBytesInSendBuffer(PacketPriority packetPriority)
+	public ulong GetBytesInSendBuffer(PacketPriority packetPriority)
 	{
 		unsafe
 		{
@@ -115,13 +116,13 @@ public struct RakNetStatistics
 		}
 	}
 
-	uint messagesInResendBuffer;
+	ulong messagesInResendBuffer;
 
 	/// <summary>
 	/// How many messages are waiting in the resend buffer? This includes messages waiting for an ack, so should normally be a small value
 	/// If the value is rising over time, you are exceeding the bandwidth capacity.
 	/// </summary>
-	public uint MessagesInResendBuffer()
+	public ulong MessagesInResendBuffer()
 	{
 		return messagesInResendBuffer;
 	}

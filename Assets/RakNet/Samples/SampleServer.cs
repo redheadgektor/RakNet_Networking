@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public struct SampleClientData
+public class SampleClientData
 {
     public ulong guid;
     public string playerName;
@@ -40,7 +40,7 @@ public class SampleServer : MonoBehaviour, IRakServer
 
             GUILayout.Box("Connected clients");
 
-            foreach(SampleClientData data in Clients.Values)
+            foreach(SampleClientData data in Clients)
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Box(data.playerName);
@@ -58,9 +58,21 @@ public class SampleServer : MonoBehaviour, IRakServer
         }
     }
 
-    public Dictionary<ulong, SampleClientData> Clients = new Dictionary<ulong, SampleClientData>();//accepted clients dictionary
+    public List<SampleClientData> Clients = new List<SampleClientData>();//accepted clients list
 
-    void IRakServer.OnConnected(ulong guid)
+    public void RemoteClientData(ulong guid)
+    {
+        for(int i = 0; i < Clients.Count; i++)
+        {
+            if(Clients[i].guid == guid)
+            {
+                Clients.RemoveAt(i);
+                break;
+            }
+        }
+    }
+
+    void IRakServer.OnConnected(ushort connectionIndex, ulong guid)
     {
         Debug.Log("[SampleServer] Client connected with guid "+guid + " [IP: "+RakServer.GetAddress(guid,true)+"]");
 
@@ -72,18 +84,21 @@ public class SampleServer : MonoBehaviour, IRakServer
         }
     }
 
-    void IRakServer.OnDisconnected(ulong guid, DisconnectReason reason)
+    void IRakServer.OnDisconnected(ushort connectionIndex, ulong guid, DisconnectReason reason, string message)
     {
-        /* Removing client data from the dictionary */
-        if (Clients.ContainsKey(guid))
+        /* Removing client data from list */
+        if (Clients[connectionIndex] != null && Clients[connectionIndex].guid == guid)
         {
-            Debug.Log("[Server] Client " + Clients[guid].playerName + " disconnected! (" + reason + ")");
-            Clients.Remove(guid);
+            Debug.Log("[Server] Client " + Clients[connectionIndex].playerName + " disconnected! (" + reason + ")");
+            RemoteClientData(guid);
         }
-
+        else
+        {
+            Debug.Log("[Server] Client " + RakServer.GetAddress(guid,true) + " disconnected! (" + reason + ")");
+        }
     }
 
-    void IRakServer.OnReceived(byte packet_id, ulong guid, BitStream bitStream)
+    void IRakServer.OnReceived(byte packet_id, ushort connectionIndex, ulong guid, BitStream bitStream, ulong local_time)
     {
         switch ((SamplePacketID)packet_id)
         {
@@ -92,7 +107,7 @@ public class SampleServer : MonoBehaviour, IRakServer
                 string playerName = bitStream.ReadString();
 
                 /* Adding the client data in the dictionary for further manipulations */
-                Clients.Add(guid, new SampleClientData() { guid = guid, playerName = playerName });
+                Clients.Add(new SampleClientData(guid, playerName));
 
                 /* Notify the client that the data is accepted */
                 using(PooledBitStream bsOut = PooledBitStream.GetBitStream())
